@@ -30,8 +30,14 @@ curlpj() {
   fi
 
   # 6. 和你手动行为保持一致：body 原样交给 jq | bat
+  # 如果 jq 解析失败（如遇到未转义的控制字符），则回退到原始输出
   if [[ "$body" == \{* || "$body" == \[* ]]; then
-    printf '%s' "$body" | jq | bat -l json
+    if printf '%s' "$body" | jq . >/dev/null 2>&1; then
+      printf '%s' "$body" | jq | bat -l json
+    else
+      echo -e "${yellow}⚠ JSON parse failed, showing raw output${reset}"
+      printf '%s' "$body"
+    fi
   else
     printf '%s' "$body"
   fi
